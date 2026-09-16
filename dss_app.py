@@ -6,33 +6,12 @@ import openpyxl
 
 st.set_page_config(page_title="El Dorado EV Charging - AI Decision Support System", layout="wide", initial_sidebar_state="expanded")
 
-# Custom Professional Styling (Dark Green & Base White - MBA Executive Palette with Fixed KPI Metric Widths)
+# Custom Professional Styling (Dark Green & Base White - Custom Executive KPI Cards)
 st.markdown("""
     <style>
     .main { background-color: #F8F9FA; }
     .stApp { background-color: #FFFFFF; }
     h1, h2, h3 { color: #1B4D3E; font-family: 'Helvetica Neue', sans-serif; }
-    
-    /* Fixed KPI Metric Styling to Prevent Truncation / Ellipsis (...) */
-    div[data-testid="stMetric"] {
-        background-color: #E8F5E9;
-        border: 1px solid #A5D6A7;
-        padding: 12px 10px;
-        border-radius: 10px;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        overflow: hidden;
-    }
-    div[data-testid="stMetric"] label {
-        font-size: 13px !important;
-        color: #1B4D3E !important;
-        font-weight: 600 !important;
-    }
-    div[data-testid="stMetric"] div[data-testid="stMetricValue"] {
-        font-size: 24px !important;
-        color: #0F2A22 !important;
-        font-weight: 700 !important;
-        white-space: nowrap !important;
-    }
     
     /* Compact Chat Box Styling */
     .chat-container { height: 280px !important; }
@@ -252,10 +231,27 @@ with col_right:
         fast_chargers = np.round(res.x[12:18]).astype(int)
         capex_used = sum(x_sites[i]*setup_costs[i] + std_chargers[i]*8 + fast_chargers[i]*15 for i in range(6))
         
-        kpi1, kpi2, kpi3 = st.columns(3)
-        kpi1.metric("Net Profit", f"₹{profit:.1f}L")
-        kpi2.metric("CapEx Used", f"₹{capex_used:.0f}/₹{int(st.session_state.budget)}L")
-        kpi3.metric("Coverage", f"{st.session_state.coverage_target*100:.0f}%")
+        # Custom HTML KPI Cards that Never Clip or Truncate
+        coverage_val = st.session_state.coverage_target * 100
+        budget_val = st.session_state.budget
+        
+        kpi_html = f"""
+        <div style="display: flex; gap: 8px; margin-bottom: 15px;">
+            <div style="flex: 1; background: #E8F5E9; border: 1px solid #A5D6A7; padding: 12px 8px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 12px; color: #1B4D3E; font-weight: 600; margin-bottom: 4px;">Net Profit</div>
+                <div style="font-size: 20px; color: #0F2A22; font-weight: 700;">₹{profit:.1f}L</div>
+            </div>
+            <div style="flex: 1; background: #E8F5E9; border: 1px solid #A5D6A7; padding: 12px 8px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 12px; color: #1B4D3E; font-weight: 600; margin-bottom: 4px;">CapEx Used</div>
+                <div style="font-size: 18px; color: #0F2A22; font-weight: 700;">₹{capex_used:.0f}/₹{budget_val:.0f}L</div>
+            </div>
+            <div style="flex: 1; background: #E8F5E9; border: 1px solid #A5D6A7; padding: 12px 8px; border-radius: 8px; text-align: center;">
+                <div style="font-size: 12px; color: #1B4D3E; font-weight: 600; margin-bottom: 4px;">Coverage</div>
+                <div style="font-size: 20px; color: #0F2A22; font-weight: 700;">{coverage_val:.0f}%</div>
+            </div>
+        </div>
+        """
+        st.markdown(kpi_html, unsafe_allow_html=True)
         
         # Highlight active hubs visually
         site_names = ["CBD Mall (C1)", "North Metro (C2)", "Tech Park (C3)", "University (C4)", "Highway Hub (C5)", "South Plaza (C6)"]
