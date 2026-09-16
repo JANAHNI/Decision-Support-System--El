@@ -1,4 +1,3 @@
-
 import streamlit as st
 import pandas as pd
 import numpy as np
@@ -7,35 +6,37 @@ import openpyxl
 
 st.set_page_config(page_title="El Dorado EV Charging - AI Decision Support System", layout="wide", initial_sidebar_state="expanded")
 
-# Custom Professional Styling (Dark Green & Base White - MBA Executive Palette with Enhanced UI Polish)
+# Custom Professional Styling (Dark Green & Base White - MBA Executive Palette with Fixed KPI Metric Widths)
 st.markdown("""
     <style>
     .main { background-color: #F8F9FA; }
     .stApp { background-color: #FFFFFF; }
     h1, h2, h3 { color: #1B4D3E; font-family: 'Helvetica Neue', sans-serif; }
     
-    /* Enhanced KPI Metric Styling */
+    /* Fixed KPI Metric Styling to Prevent Truncation / Ellipsis (...) */
     div[data-testid="stMetric"] {
         background-color: #E8F5E9;
         border: 1px solid #A5D6A7;
-        padding: 18px 20px;
+        padding: 12px 10px;
         border-radius: 10px;
         box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        overflow: hidden;
     }
     div[data-testid="stMetric"] label {
-        font-size: 16px !important;
+        font-size: 13px !important;
         color: #1B4D3E !important;
         font-weight: 600 !important;
     }
     div[data-testid="stMetric"] div[data-testid="stMetricValue"] {
-        font-size: 32px !important;
+        font-size: 24px !important;
         color: #0F2A22 !important;
         font-weight: 700 !important;
+        white-space: nowrap !important;
     }
     
     /* Compact Chat Box Styling */
     .chat-container { height: 280px !important; }
-    
+
     /* Subtle Footer Styling */
     .footer-note {
         font-size: 12px;
@@ -252,12 +253,18 @@ with col_right:
         capex_used = sum(x_sites[i]*setup_costs[i] + std_chargers[i]*8 + fast_chargers[i]*15 for i in range(6))
         
         kpi1, kpi2, kpi3 = st.columns(3)
-        kpi1.metric("Net Monthly Profit", f"₹{profit:.2f}L")
-        kpi2.metric("CapEx Utilized", f"₹{capex_used:.1f} / ₹{st.session_state.budget}L")
-        kpi3.metric("Coverage Met", f"{st.session_state.coverage_target*100:.0f}%")
+        kpi1.metric("Net Profit", f"₹{profit:.1f}L")
+        kpi2.metric("CapEx Used", f"₹{capex_used:.0f}/₹{int(st.session_state.budget)}L")
+        kpi3.metric("Coverage", f"{st.session_state.coverage_target*100:.0f}%")
         
-        # Detailed Table
+        # Highlight active hubs visually
         site_names = ["CBD Mall (C1)", "North Metro (C2)", "Tech Park (C3)", "University (C4)", "Highway Hub (C5)", "South Plaza (C6)"]
+        
+        active_hubs_found = [site_names[i] for i in range(6) if x_sites[i] == 1]
+        if active_hubs_found:
+            st.markdown(f"**⚡ Active Hubs:** `{', '.join(active_hubs_found)}`")
+        
+        # Detailed Table with Styling
         df_out = pd.DataFrame({
             "Candidate Site": site_names,
             "Status": ["🟢 ACTIVE" if x == 1 else "🔴 INACTIVE" for x in x_sites],
@@ -265,7 +272,12 @@ with col_right:
             "Fast": fast_chargers,
             "Setup Cost": [f"₹{setup_costs[i]:.1f}L" for i in range(6)]
         })
-        st.dataframe(df_out, use_container_width=True, hide_index=True)
+        
+        def highlight_active(row):
+            return ['background-color: #E8F5E9; font-weight: 600;' if "ACTIVE" in str(row['Status']) else 'color: #888888;' for _ in row]
+            
+        styled_df = df_out.style.apply(highlight_active, axis=1)
+        st.dataframe(styled_df, use_container_width=True, hide_index=True)
     else:
         st.error("⚠️ No feasible network configuration found under current constraints. Try expanding budget or reducing coverage.")
 
